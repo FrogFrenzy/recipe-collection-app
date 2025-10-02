@@ -1,8 +1,22 @@
-import { Recipe } from './types';
+// Types
+export type RecipeCategory = 'breakfast' | 'lunch' | 'dinner' | 'dessert' | 'snack';
 
+export interface Recipe {
+  id: string;
+  title: string;
+  category: RecipeCategory;
+  prepTime: number; // in minutes
+  cookTime: number; // in minutes
+  servings: number;
+  ingredients: string[];
+  instructions: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Storage functions
 const STORAGE_KEY = 'recipes';
 
-// Get all recipes from localStorage
 export function getRecipes(): Recipe[] {
   if (typeof window === 'undefined') return [];
 
@@ -15,13 +29,11 @@ export function getRecipes(): Recipe[] {
   }
 }
 
-// Get a single recipe by ID
 export function getRecipeById(id: string): Recipe | null {
   const recipes = getRecipes();
   return recipes.find(recipe => recipe.id === id) || null;
 }
 
-// Save all recipes to localStorage
 export function saveRecipes(recipes: Recipe[]): void {
   if (typeof window === 'undefined') return;
 
@@ -32,7 +44,6 @@ export function saveRecipes(recipes: Recipe[]): void {
   }
 }
 
-// Add a new recipe
 export function addRecipe(recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>): Recipe {
   const recipes = getRecipes();
   const newRecipe: Recipe = {
@@ -47,7 +58,6 @@ export function addRecipe(recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>
   return newRecipe;
 }
 
-// Update an existing recipe
 export function updateRecipe(id: string, updates: Partial<Omit<Recipe, 'id' | 'createdAt'>>): Recipe | null {
   const recipes = getRecipes();
   const index = recipes.findIndex(recipe => recipe.id === id);
@@ -65,7 +75,6 @@ export function updateRecipe(id: string, updates: Partial<Omit<Recipe, 'id' | 'c
   return updatedRecipe;
 }
 
-// Delete a recipe
 export function deleteRecipe(id: string): boolean {
   const recipes = getRecipes();
   const filtered = recipes.filter(recipe => recipe.id !== id);
@@ -76,7 +85,6 @@ export function deleteRecipe(id: string): boolean {
   return true;
 }
 
-// Search recipes by title
 export function searchRecipes(query: string): Recipe[] {
   const recipes = getRecipes();
   const lowerQuery = query.toLowerCase();
@@ -85,7 +93,6 @@ export function searchRecipes(query: string): Recipe[] {
   );
 }
 
-// Filter recipes by category
 export function filterRecipesByCategory(category: string): Recipe[] {
   if (category === 'all') return getRecipes();
   const recipes = getRecipes();

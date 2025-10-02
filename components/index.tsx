@@ -1,15 +1,152 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, FormEvent } from 'react';
-import { Recipe, RecipeCategory } from '@/lib/types';
+import { Recipe, RecipeCategory } from '@/lib';
 
+// Header Component
+export function Header() {
+  return (
+    <header className="bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">🍳 Recipe Collection</h1>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// SearchBar Component
+interface SearchBarProps {
+  searchQuery: string;
+  selectedCategory: string;
+  onSearchChange: (query: string) => void;
+  onCategoryChange: (category: string) => void;
+}
+
+const categories: { value: string; label: string }[] = [
+  { value: 'all', label: 'All Recipes' },
+  { value: 'breakfast', label: 'Breakfast' },
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'dinner', label: 'Dinner' },
+  { value: 'dessert', label: 'Dessert' },
+  { value: 'snack', label: 'Snack' },
+];
+
+export function SearchBar({
+  searchQuery,
+  selectedCategory,
+  onSearchChange,
+  onCategoryChange,
+}: SearchBarProps) {
+  return (
+    <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search recipes..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
+          />
+        </div>
+        <div className="md:w-64">
+          <select
+            value={selectedCategory}
+            onChange={(e) => onCategoryChange(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition bg-white cursor-pointer"
+          >
+            {categories.map((cat) => (
+              <option key={cat.value} value={cat.value}>
+                {cat.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// RecipeCard Component
+interface RecipeCardProps {
+  recipe: Recipe;
+  onView: (id: string) => void;
+}
+
+const categoryColors = {
+  breakfast: 'bg-yellow-100 text-yellow-800',
+  lunch: 'bg-green-100 text-green-800',
+  dinner: 'bg-blue-100 text-blue-800',
+  dessert: 'bg-pink-100 text-pink-800',
+  snack: 'bg-purple-100 text-purple-800',
+};
+
+const categoryEmojis = {
+  breakfast: '🍳',
+  lunch: '🥗',
+  dinner: '🍽️',
+  dessert: '🍰',
+  snack: '🍿',
+};
+
+export function RecipeCard({ recipe, onView }: RecipeCardProps) {
+  const totalTime = recipe.prepTime + recipe.cookTime;
+
+  return (
+    <div 
+      onClick={() => onView(recipe.id)}
+      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 h-full cursor-pointer"
+    >
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="text-xl font-bold text-gray-800 flex-1 mr-2 line-clamp-2">
+            {recipe.title}
+          </h3>
+          <span className="text-2xl flex-shrink-0">
+            {categoryEmojis[recipe.category]}
+          </span>
+        </div>
+
+        <div className="mb-4">
+          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${categoryColors[recipe.category]}`}>
+            {recipe.category}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <span className="font-medium">⏱️</span>
+              <span>{totalTime} min</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-medium">🍽️</span>
+              <span>{recipe.servings} servings</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-gray-100">
+          <p className="text-sm text-gray-500">
+            {recipe.ingredients.length} ingredients · {recipe.instructions.length} steps
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// RecipeForm Component
 interface RecipeFormProps {
   initialRecipe?: Recipe;
   onSubmit: (recipe: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onCancel: () => void;
 }
 
-export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: RecipeFormProps) {
+export function RecipeForm({ initialRecipe, onSubmit, onCancel }: RecipeFormProps) {
   const [title, setTitle] = useState(initialRecipe?.title || '');
   const [category, setCategory] = useState<RecipeCategory>(initialRecipe?.category || 'dinner');
   const [prepTime, setPrepTime] = useState(initialRecipe?.prepTime.toString() || '');
@@ -21,7 +158,6 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
 
-    // Filter out empty ingredients and instructions
     const filteredIngredients = ingredients.filter(ing => ing.trim() !== '');
     const filteredInstructions = instructions.filter(inst => inst.trim() !== '');
 
@@ -41,28 +177,16 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
     });
   };
 
-  const addIngredient = () => {
-    setIngredients([...ingredients, '']);
-  };
-
-  const removeIngredient = (index: number) => {
-    setIngredients(ingredients.filter((_, i) => i !== index));
-  };
-
+  const addIngredient = () => setIngredients([...ingredients, '']);
+  const removeIngredient = (index: number) => setIngredients(ingredients.filter((_, i) => i !== index));
   const updateIngredient = (index: number, value: string) => {
     const updated = [...ingredients];
     updated[index] = value;
     setIngredients(updated);
   };
 
-  const addInstruction = () => {
-    setInstructions([...instructions, '']);
-  };
-
-  const removeInstruction = (index: number) => {
-    setInstructions(instructions.filter((_, i) => i !== index));
-  };
-
+  const addInstruction = () => setInstructions([...instructions, '']);
+  const removeInstruction = (index: number) => setInstructions(instructions.filter((_, i) => i !== index));
   const updateInstruction = (index: number, value: string) => {
     const updated = [...instructions];
     updated[index] = value;
@@ -75,14 +199,10 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
         {initialRecipe ? 'Edit Recipe' : 'Add New Recipe'}
       </h2>
 
-      {/* Title */}
       <div className="mb-6">
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-          Recipe Title *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Recipe Title *</label>
         <input
           type="text"
-          id="title"
           required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -91,13 +211,9 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
         />
       </div>
 
-      {/* Category */}
       <div className="mb-6">
-        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-          Category *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
         <select
-          id="category"
           required
           value={category}
           onChange={(e) => setCategory(e.target.value as RecipeCategory)}
@@ -111,15 +227,11 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
         </select>
       </div>
 
-      {/* Time and Servings */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
-          <label htmlFor="prepTime" className="block text-sm font-medium text-gray-700 mb-2">
-            Prep Time (min) *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Prep Time (min) *</label>
           <input
             type="number"
-            id="prepTime"
             required
             min="0"
             value={prepTime}
@@ -127,14 +239,10 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
           />
         </div>
-
         <div>
-          <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700 mb-2">
-            Cook Time (min) *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Cook Time (min) *</label>
           <input
             type="number"
-            id="cookTime"
             required
             min="0"
             value={cookTime}
@@ -142,14 +250,10 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
           />
         </div>
-
         <div>
-          <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">
-            Servings *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Servings *</label>
           <input
             type="number"
-            id="servings"
             required
             min="1"
             value={servings}
@@ -159,11 +263,8 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
         </div>
       </div>
 
-      {/* Ingredients */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Ingredients *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Ingredients *</label>
         <div className="space-y-2">
           {ingredients.map((ingredient, index) => (
             <div key={index} className="flex gap-2">
@@ -195,11 +296,8 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
         </button>
       </div>
 
-      {/* Instructions */}
       <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Instructions *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Instructions *</label>
         <div className="space-y-2">
           {instructions.map((instruction, index) => (
             <div key={index} className="flex gap-2">
@@ -234,7 +332,6 @@ export default function RecipeForm({ initialRecipe, onSubmit, onCancel }: Recipe
         </button>
       </div>
 
-      {/* Form Actions */}
       <div className="flex gap-4">
         <button
           type="submit"
